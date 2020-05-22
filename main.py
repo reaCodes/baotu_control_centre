@@ -78,7 +78,7 @@ class Example(QWidget):
         self.grid.addWidget(self.btn_3, 1, 1)
         self.grid.addWidget(self.btn_4, 3, 1)
         # self.grid.addWidget(self.label,2,1)
-        self.setWindowTitle("领取宝图业务控制中心")
+        self.setWindowTitle("宝箱控制中心")
         self.table.verticalHeader().setVisible(False)
         self.show()
 
