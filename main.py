@@ -1,12 +1,14 @@
 import datetime
 import sys
 
+from PyQt5.QtGui import QIcon
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import (QWidget, QToolTip,
                              QPushButton, QApplication, QTableWidget, QAbstractItemView, QLabel, QTableWidgetItem,
                              QGridLayout, QMessageBox)
 from PyQt5.QtCore import Qt
 import program
+import os
 
 
 class Example(QWidget):
@@ -19,6 +21,7 @@ class Example(QWidget):
         self.btn_2 = QPushButton(self)
         self.btn_3 = QPushButton(self)
         self.btn_4 = QPushButton(self)
+        self.btn_5 = QPushButton(self)
         self.grid = QGridLayout(self)
         self.count = 0
         self.excel_content = program.parse_excel("config_info.xlsx")
@@ -71,14 +74,22 @@ class Example(QWidget):
         self.btn_4.clicked.connect(self.btn_4_click)
         self.btn_4.setFixedSize(100, 30)
 
-        self.grid.addWidget(self.table, 0, 0, 5, 1)
+        self.btn_5.setText("关闭已选中程序")
+        self.btn_5.move(650, 280)
+        self.btn_5.clicked.connect(self.btn_5_click)
+        self.btn_5.setFixedSize(100, 30)
+
+        self.grid.addWidget(self.table, 0, 0, 6, 1)
         self.grid.addWidget(self.btn_1, 0, 1)
         self.grid.addWidget(self.btn_2, 2, 1)
 
         self.grid.addWidget(self.btn_3, 1, 1)
         self.grid.addWidget(self.btn_4, 3, 1)
+        self.grid.addWidget(self.btn_5, 4, 1)
         # self.grid.addWidget(self.label,2,1)
         self.setWindowTitle("宝箱控制中心")
+        if os.path.exists("logo.ico"):
+            self.setWindowIcon(QIcon("logo.ico"))
         self.table.verticalHeader().setVisible(False)
         self.show()
 
@@ -94,6 +105,7 @@ class Example(QWidget):
         process_pid = program.start_prgram(item_exe, item_config)
         row = self.table.selectedItems()[0].row()
         self.table.item(row, 7).setText(str(process_pid))
+        self.table.item(row, 6).setText("是")
         QTableWidget.resizeColumnsToContents(self.table)
         QTableWidget.resizeRowsToContents(self.table)
 
@@ -164,6 +176,9 @@ class Example(QWidget):
                 '%Y_%m_%d') + ".log"
             QMessageBox.about(self, "提示", log_path + " 没有找到该文件")
             return
+        elif one_gold_silver == 2:
+            QMessageBox.about(self, "提示", "该程序不支持统计")
+            return
 
         self.table.item(row, 5).setText(
             "金豆：" + str(one_gold_silver[0]) + '\n' + "银豆：" + str(one_gold_silver[1]))
@@ -179,7 +194,7 @@ class Example(QWidget):
 
             pid_str = self.table.item(row, 7).text()
             if pid_str != '':
-                process_exist = program.pid_is_exist(int(self.table.item(row, 7).text()))
+                process_exist = program.pid_is_exist(int(pid_str))
                 if process_exist:
                     self.table.item(row, 6).setText("是")
                 else:
@@ -195,6 +210,9 @@ class Example(QWidget):
                     '%Y_%m_%d') + ".log"
                 QMessageBox.about(self, "提示", log_path + " 没有找到该文件")
                 return
+            elif one_gold_silver == 2:
+                # QMessageBox.about(self, "提示", "该程序不支持统计")
+                continue
 
             self.table.item(row, 5).setText(
                 "金豆：" + str(one_gold_silver[0]) + '\n' + "银豆：" + str(one_gold_silver[1]))
@@ -209,6 +227,24 @@ class Example(QWidget):
         self.excel_row = len(self.excel_content)
         if self.set_table():
             QMessageBox.about(self, "提示", "刷新成功")
+
+    def btn_5_click(self):
+        if self.table.selectedItems() == []:
+            QMessageBox.about(self, "提示", "请选择一行")
+            return
+        row = self.table.selectedItems()[0].row()
+        pid_str = self.table.item(row, 7).text()
+        if pid_str == "":
+            QMessageBox.about(self, "提示", "该程序还没有启动过")
+            return
+        else:
+            if program.kill(int(pid_str)):
+                self.table.item(row, 6).setText("否")
+                QMessageBox.about(self, "提示", "关闭成功")
+                return
+            else:
+                QMessageBox.about(self, "提示", "程序当前处于关闭状态，无需关闭")
+                return
 
     def resizeEvent(self, Event):
         self.label.move(self.width() - 100, self.height() - 100)

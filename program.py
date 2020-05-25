@@ -1,13 +1,13 @@
-import openpyxl
-from PyQt5 import QtCore
-import subprocess
-# import os
-import pyperclip
-import pyautogui
 import datetime
-import psutil
-import time
 import io
+import os
+import subprocess
+import time
+
+import openpyxl
+import psutil
+import pyautogui
+import pyperclip
 
 
 def parse_excel(excel_path):
@@ -35,7 +35,8 @@ def parse_excel(excel_path):
 
 
 def income_sum(program_path):
-
+    if "BaoTu.exe" not in program_path:
+        return 2
     log_path = program_path.split("BaoTu.exe")[0] + "Log\\" + datetime.date.today().strftime('%Y_%m_%d') + ".log"
     try:
         f_log = open(log_path, 'r', encoding='utf-8')
@@ -46,7 +47,7 @@ def income_sum(program_path):
     for line in f_log.readlines():
         if "金豆" in line:
             i = line.find("豆")
-            gold += int(line[i+1:i+10].split(' ')[0])
+            gold += int(line[i + 1:i + 10].split(' ')[0])
         if "银豆" in line:
             j = line.find("豆")
             silver += int(line[j + 1:j + 10].split(' ')[0])
@@ -55,15 +56,21 @@ def income_sum(program_path):
 
 
 def start_prgram(program_path, config_path):
-    process = subprocess.Popen("start /wait " + program_path, shell=True, stdin=subprocess.PIPE, encoding='utf-8')
+    current_path = os.getcwd()
+    if "Task.DouZi.exe" in program_path:
+        os.chdir(program_path.split("Task.DouZi.exe")[0])
+        program_path = "Task.DouZi.exe"
+
+    process = subprocess.Popen(program_path, creationflags=subprocess.CREATE_NEW_CONSOLE, encoding='utf-8')
     process_pid = process.pid
-    # print(process_pid)
 
     time.sleep(1)
     pyperclip.copy(config_path)
     time.sleep(0.1)
     pyautogui.hotkey('ctrl', 'v')
     pyautogui.hotkey('enter')
+
+    os.chdir(current_path)
     return process_pid
 
 
@@ -88,16 +95,17 @@ def pid_is_exist(pid):
     exist = False
 
     if psutil.pid_exists(pid):
-        # process = psutil.Process(pid)
-        # if process.name() == "BaoTu.exe":
-        #     exist = True
         exist = True
     return exist
 
 
+def kill(pid):
+    if not pid_is_exist(pid):
+        return False
+    p = psutil.Process(pid)
+    p.kill()
+    return True
+
+
 if __name__ == "__main__":
-    # a = parse_excel("/config_info.xlsx")
-    b = income_sum("C:/Users/zhong/Downloads/测试/BaoTu.exe")
-    # pid = start_prgram("C:/Users/zhong/Downloads/测试/BaoTu.exe", "C:/Users/zhong/Downloads/BaoTuConfig.config")
-    pid_is_exist(3204)
-    # get_db_pi_path("C:/Users/zhong/Downloads/测试/Config/BaoTuConfig.config")
+    pass
